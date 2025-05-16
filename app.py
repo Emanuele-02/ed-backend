@@ -4,12 +4,13 @@ import openai
 import os
 
 app = Flask(__name__)
-CORS(app)  # ✅ Per permettere richieste cross-origin da lume.study
+CORS(app)  # Per consentire richieste dal dominio ed.lume.study
 
+# Chiavi e sicurezza
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Prompt avanzato per Ed (tutor scolastico)
+# Prompt avanzato per Ed, il tutor
 SYSTEM_PROMPT = """
 Sei Ed, un tutor digitale per studenti della scuola secondaria di primo e secondo grado (medie e superiori). Il tuo compito è aiutare lo studente a comprendere meglio le materie scolastiche, spiegando concetti in modo chiaro, graduale e accessibile.
 Ti rivolgi allo studente con tono amichevole, mai infantile, mostrando rispetto e incoraggiamento.
@@ -53,7 +54,7 @@ def chat():
     if not message:
         return jsonify({"error": "Messaggio mancante"}), 400
 
-    # ✅ Se utente non abbonato, conta i messaggi e blocca dopo 5
+    # Limite per utenti non abbonati: 5 messaggi
     if not is_subscribed:
         if "free_count" not in session:
             session["free_count"] = 0
@@ -67,7 +68,7 @@ def chat():
     session["history"].append({"role": "user", "content": message})
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.extend(session["history"][-10:])
+    messages.extend(session["history"][-10:])  # mantiene solo gli ultimi 10 scambi
 
     try:
         response = openai.ChatCompletion.create(
@@ -87,11 +88,11 @@ def chat():
         print("Errore backend:", e)
         return jsonify({"error": str(e)}), 500
 
-# ✅ Endpoint per resettare la cronologia
 @app.route("/reset", methods=["POST"])
 def reset():
     session.pop("history", None)
     session.pop("free_count", None)
     return jsonify({"status": "Memoria resettata"})
 
-if __name__ == "
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
