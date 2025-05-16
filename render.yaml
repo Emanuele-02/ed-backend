@@ -4,7 +4,8 @@ services:
     env: python
     buildCommand: ""
     startCommand: python app.py
-    plan: free
     envVars:
       - key: OPENAI_API_KEY
-        value: YOUR_OPENAI_KEY_HERE
+        sync: false
+      - key: FLASK_SECRET_KEY
+        sync: false
