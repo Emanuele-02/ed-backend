@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify, session
+from flask_cors import CORS
 import openai
 import os
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")  # 🔒 Sicurezza minima
+CORS(app)  # ✅ Per permettere richieste cross-origin da lume.study
 
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Prompt avanzato per Ed (tutor scolastico)
@@ -46,20 +48,26 @@ Il tuo scopo è insegnare a capire, non solo a rispondere.
 def chat():
     data = request.get_json()
     message = data.get("message", "")
+    is_subscribed = data.get("isSubscribed", False)
 
     if not message:
         return jsonify({"error": "Messaggio mancante"}), 400
 
-    # Recupera la cronologia dalla sessione (memoria base per utente)
+    # ✅ Se utente non abbonato, conta i messaggi e blocca dopo 5
+    if not is_subscribed:
+        if "free_count" not in session:
+            session["free_count"] = 0
+        session["free_count"] += 1
+        if session["free_count"] > 5:
+            return jsonify({"showStripe": True})
+
     if "history" not in session:
         session["history"] = []
 
-    # Aggiungi messaggio utente alla cronologia
     session["history"].append({"role": "user", "content": message})
 
-    # Costruisci la conversazione per GPT
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.extend(session["history"][-10:])  # Mantiene solo gli ultimi 10 scambi
+    messages.extend(session["history"][-10:])
 
     try:
         response = openai.ChatCompletion.create(
@@ -68,18 +76,22 @@ def chat():
         )
         reply = response.choices[0].message["content"]
 
-        # Aggiungi risposta di Ed alla cronologia
         session["history"].append({"role": "assistant", "content": reply})
 
-        return jsonify({"reply": reply})
+        return jsonify({
+            "reply": reply,
+            "free_count": session.get("free_count", 0)
+        })
+
     except Exception as e:
+        print("Errore backend:", e)
         return jsonify({"error": str(e)}), 500
 
-# ✅ Endpoint per resettare la cronologia (utile per il frontend)
+# ✅ Endpoint per resettare la cronologia
 @app.route("/reset", methods=["POST"])
 def reset():
     session.pop("history", None)
+    session.pop("free_count", None)
     return jsonify({"status": "Memoria resettata"})
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == "
