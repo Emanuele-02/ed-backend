@@ -84,8 +84,10 @@ def chat():
             "free_count": session.get("free_count", 0)
         })
 
-    except Exception as e:
-        print("Errore backend:", e)
+        except Exception as e:
+        import traceback
+        print("❌ Errore backend:", e)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route("/reset", methods=["POST"])
