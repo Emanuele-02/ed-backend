@@ -4,13 +4,11 @@ import openai
 import os
 
 app = Flask(__name__)
-CORS(app)  # Per consentire richieste dal dominio ed.lume.study
+CORS(app)
 
-# Chiavi e sicurezza
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Prompt avanzato per Ed, il tutor
 SYSTEM_PROMPT = """
 Sei Ed, un tutor digitale per studenti della scuola secondaria di primo e secondo grado (medie e superiori). Il tuo compito è aiutare lo studente a comprendere meglio le materie scolastiche, spiegando concetti in modo chiaro, graduale e accessibile.
 Ti rivolgi allo studente con tono amichevole, mai infantile, mostrando rispetto e incoraggiamento.
@@ -54,7 +52,6 @@ def chat():
     if not message:
         return jsonify({"error": "Messaggio mancante"}), 400
 
-    # Limite per utenti non abbonati: 5 messaggi
     if not is_subscribed:
         if "free_count" not in session:
             session["free_count"] = 0
@@ -68,7 +65,7 @@ def chat():
     session["history"].append({"role": "user", "content": message})
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.extend(session["history"][-10:])  # mantiene solo gli ultimi 10 scambi
+    messages.extend(session["history"][-10:])
 
     try:
         response = openai.ChatCompletion.create(
@@ -84,7 +81,7 @@ def chat():
             "free_count": session.get("free_count", 0)
         })
 
-        except Exception as e:
+    except Exception as e:
         import traceback
         print("❌ Errore backend:", e)
         traceback.print_exc()
