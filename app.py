@@ -1,13 +1,17 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
-import openai
+from openai import OpenAI
 import os
 
+# Inizializzazione Flask
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Inizializzazione OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Prompt di sistema per Ed
 SYSTEM_PROMPT = """
 Sei Ed, un tutor digitale per studenti della scuola secondaria di primo e secondo grado (medie e superiori). Il tuo compito è aiutare lo studente a comprendere meglio le materie scolastiche, spiegando concetti in modo chiaro, graduale e accessibile.
 Ti rivolgi allo studente con tono amichevole, mai infantile, mostrando rispetto e incoraggiamento.
@@ -62,16 +66,15 @@ def chat():
         session["history"] = []
 
     session["history"].append({"role": "user", "content": message})
-
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(session["history"][-10:])
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4-turbo",
             messages=messages
         )
-        reply = response.choices[0].message["content"]
+        reply = response.choices[0].message.content
 
         session["history"].append({"role": "assistant", "content": reply})
 
