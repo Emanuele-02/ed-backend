@@ -95,9 +95,10 @@ def chat():
         session["history"].append({"role": "assistant", "content": reply_clean})
 
         return jsonify({
-            "reply": reply_clean,
-            "title": title,
-            "free_count": session.get("free_count", 0)
+        "reply": reply_clean,
+        "title": title,
+        "conversationId": conversation_id,  # ✅ aggiunto
+        "free_count": session.get("free_count", 0)
         })
 
     except Exception as e:
