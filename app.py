@@ -82,7 +82,8 @@ def chat():
         )
 
         full_reply = response.choices[0].message.content
-        print("📋 FULL REPLY:", full_reply)  # 👈 Aggiungi questa
+        import sys
+        print("📋 FULL REPLY:", full_reply, file=sys.stderr)
         
         # Estrai il titolo dalla risposta
         lines = full_reply.strip().split("\n")
