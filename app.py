@@ -117,5 +117,45 @@ def reset():
     session.pop("free_count", None)
     return jsonify({"status": "Memoria resettata"})
 
+app = Flask(__name__)
+stripe.api_key = "sk_test_51Q3KxYHUcdjxDHrPKituAc0GiRRKfvN5BgM0UhAnSWSZQqJh98JKV6nxAKFmslJ8cEGLejjl3kkonzKNSoeS8oyR001DAWHYJW"  # ⚠️ chiave segreta (NON pubblica)
+
+WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
+WP_API_SECRET = "YOUR_SHARED_SECRET"  # usalo per validare che la chiamata sia autorizzata
+
+@app.route("/create-subscription", methods=["POST"])
+def create_subscription():
+    data = request.get_json()
+    email = data.get("email")
+    payment_method_id = data.get("payment_method_id")
+
+    try:
+        # 1. Crea cliente
+        customer = stripe.Customer.create(email=email, payment_method=payment_method_id, invoice_settings={
+            "default_payment_method": payment_method_id,
+        })
+
+        # 2. Crea abbonamento
+        subscription = stripe.Subscription.create(
+            customer=customer.id,
+            items=[{"price": "price_1RWfGcHUcdjxDHrPD8Fmy9hS"}],  # ⬅️ Sostituisci con il tuo prezzo
+            expand=["latest_invoice.payment_intent"]
+        )
+
+        # 3. Conferma pagamento
+        payment_intent = subscription["latest_invoice"]["payment_intent"]
+        if payment_intent["status"] == "succeeded":
+            # 4. Comunica a WordPress che è abbonato
+            wp_response = requests.post(WP_API_URL, json={"email": email}, headers={
+                "Authorization": f"Bearer {WP_API_SECRET}"
+            })
+            print("✅ WP response:", wp_response.text)
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Pagamento non riuscito"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
