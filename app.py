@@ -128,6 +128,8 @@ auth_header = request.headers.get("Authorization")
 if auth_header != f"Bearer {WP_API_SECRET}":
     return jsonify({"error": "Unauthorized"}), 401
 
+WP_API_SECRET = os.getenv("WP_API_SECRET")
+
 @app.route("/create-subscription", methods=["POST"])
 def create_subscription():
     auth_header = request.headers.get("Authorization")
