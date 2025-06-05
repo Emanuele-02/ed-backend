@@ -124,8 +124,16 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
 WP_API_SECRET = "YOUR_SHARED_SECRET"  # usalo per validare che la chiamata sia autorizzata
 
+auth_header = request.headers.get("Authorization")
+if auth_header != f"Bearer {WP_API_SECRET}":
+    return jsonify({"error": "Unauthorized"}), 401
+
 @app.route("/create-subscription", methods=["POST"])
 def create_subscription():
+    auth_header = request.headers.get("Authorization")
+    if auth_header != f"Bearer {WP_API_SECRET}":
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
     email = data.get("email")
     payment_method_id = data.get("payment_method_id")
