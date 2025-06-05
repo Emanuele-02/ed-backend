@@ -121,8 +121,7 @@ import os
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
-WP_API_SECRET = "YOUR_SHARED_SECRET"  # usalo per validare che la chiamata sia autorizzata
-WP_API_SECRET = os.getenv("WP_API_SECRET")
+WP_API_SECRET = os.getenv("WP_API_SECRET", "your-fallback-secret")
 
 print("🔐 Chiave Stripe:", os.getenv("STRIPE_SECRET_KEY")[:8], "********")
 print("🔐 WP Secret:", os.getenv("WP_API_SECRET"))
