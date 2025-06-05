@@ -130,6 +130,9 @@ if auth_header != f"Bearer {WP_API_SECRET}":
 
 WP_API_SECRET = os.getenv("WP_API_SECRET")
 
+print("🔐 Chiave Stripe:", os.getenv("STRIPE_SECRET_KEY")[:8], "********")
+print("🔐 WP Secret:", os.getenv("WP_API_SECRET"))
+
 @app.route("/create-subscription", methods=["POST"])
 def create_subscription():
     auth_header = request.headers.get("Authorization")
