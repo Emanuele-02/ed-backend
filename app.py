@@ -118,7 +118,8 @@ def reset():
     return jsonify({"status": "Memoria resettata"})
 
 app = Flask(__name__)
-stripe.api_key = "sk_test_51Q3KxYHUcdjxDHrPKituAc0GiRRKfvN5BgM0UhAnSWSZQqJh98JKV6nxAKFmslJ8cEGLejjl3kkonzKNSoeS8oyR001DAWHYJW"  # ⚠️ chiave segreta (NON pubblica)
+import os
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
 WP_API_SECRET = "YOUR_SHARED_SECRET"  # usalo per validare che la chiamata sia autorizzata
