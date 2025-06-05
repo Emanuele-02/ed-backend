@@ -10,6 +10,12 @@ app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 
+import os
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
+WP_API_SECRET = os.getenv("WP_API_SECRET", "your-fallback-secret")
+
 # Inizializzazione OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -116,12 +122,6 @@ def reset():
     session.pop("history", None)
     session.pop("free_count", None)
     return jsonify({"status": "Memoria resettata"})
-
-import os
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-
-WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
-WP_API_SECRET = os.getenv("WP_API_SECRET", "your-fallback-secret")
 
 @app.route("/create-subscription", methods=["POST"])
 def create_subscription():
