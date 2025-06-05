@@ -117,17 +117,11 @@ def reset():
     session.pop("free_count", None)
     return jsonify({"status": "Memoria resettata"})
 
-app = Flask(__name__)
 import os
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
 WP_API_SECRET = "YOUR_SHARED_SECRET"  # usalo per validare che la chiamata sia autorizzata
-
-auth_header = request.headers.get("Authorization")
-if auth_header != f"Bearer {WP_API_SECRET}":
-    return jsonify({"error": "Unauthorized"}), 401
-
 WP_API_SECRET = os.getenv("WP_API_SECRET")
 
 print("🔐 Chiave Stripe:", os.getenv("STRIPE_SECRET_KEY")[:8], "********")
