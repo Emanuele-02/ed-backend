@@ -10,7 +10,6 @@ app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 
-import os
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
@@ -56,31 +55,43 @@ Il tuo scopo è insegnare a capire, non solo a rispondere.
 
 @app.route("/chat", methods=["POST"])
 def chat():
-try:
-    data = request.get_json()
-    conversation_id = data.get("conversationId")
-    message = data.get("message", "")
-    is_subscribed = data.get("isSubscribed", False)
+    try:
+        data = request.get_json()
+        conversation_id = data.get("conversationId")
+        message = data.get("message", "")
+        is_subscribed = data.get("isSubscribed", False)
 
-    if not message:
-        return jsonify({"error": "Messaggio mancante"}), 400
+        if not message:
+            return jsonify({"error": "Messaggio mancante"}), 400
 
-    if not is_subscribed:
-        if "free_count" not in session:
-            session["free_count"] = 0
-        session["free_count"] += 1
-        if session["free_count"] > 5:
-            return jsonify({"showStripe": True})
+        if not is_subscribed:
+            if "free_count" not in session:
+                session["free_count"] = 0
+            session["free_count"] += 1
+            if session["free_count"] > 5:
+                return jsonify({"showStripe": True})
 
-    if "history" not in session:
-        session["history"] = []
+        if "history" not in session:
+            session["history"] = []
 
-            # Estrai il titolo dalla risposta
+        session["history"].append({"role": "user", "content": message})
+
+        modified_prompt = SYSTEM_PROMPT + "\n\nDopo ogni risposta, fornisci anche un titolo breve (massimo 6 parole) che riassuma l’argomento trattato. Scrivi alla fine su una riga separata: Titolo: ..."
+
+        messages = [{"role": "system", "content": modified_prompt}]
+        messages.extend(session["history"][-10:])
+
+        response = client.chat.completions.create(
+            model="gpt-4-0125-preview",
+            messages=messages
+        )
+
+        full_reply = response.choices[0].message.content
+
         lines = full_reply.strip().split("\n")
         title_line = next((line for line in reversed(lines) if line.strip().lower().startswith("titolo:")), None)
         title = title_line.split(":", 1)[1].strip() if title_line else "Nuova chat"
 
-        # 🔍 Filtra titoli generici o inutili
         title_lower = title.lower()
         if (
             title_lower.startswith("ciao") or
@@ -90,12 +101,10 @@ try:
         ):
             title = "Nuova chat"
 
-        # Rimuovi la riga del titolo dalla risposta da mostrare all’utente
         reply_clean = "\n".join(
             line for line in lines if not line.strip().lower().startswith("titolo:")
         ).strip()
 
-        # Salva la risposta nell'history
         session["history"].append({"role": "assistant", "content": reply_clean})
 
         return jsonify({
@@ -107,10 +116,10 @@ try:
 
     except Exception as e:
         import traceback
-        print("❌ Errore backend:", e)
+        print("\u274c Errore backend:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-        
+
 @app.route("/reset", methods=["POST"])
 def reset():
     session.pop("history", None)
@@ -128,26 +137,22 @@ def create_subscription():
     payment_method_id = data.get("payment_method_id")
 
     try:
-        # 1. Crea cliente
         customer = stripe.Customer.create(email=email, payment_method=payment_method_id, invoice_settings={
             "default_payment_method": payment_method_id,
         })
 
-        # 2. Crea abbonamento
         subscription = stripe.Subscription.create(
             customer=customer.id,
-            items=[{"price": "price_1RWfGcHUcdjxDHrPD8Fmy9hS"}],  # ⬅️ Sostituisci con il tuo prezzo
+            items=[{"price": "price_1RWfGcHUcdjxDHrPD8Fmy9hS"}],
             expand=["latest_invoice.payment_intent"]
         )
 
-        # 3. Conferma pagamento
         payment_intent = subscription["latest_invoice"]["payment_intent"]
         if payment_intent["status"] == "succeeded":
-            # 4. Comunica a WordPress che è abbonato
             wp_response = requests.post(WP_API_URL, json={"email": email}, headers={
                 "Authorization": f"Bearer {WP_API_SECRET}"
             })
-            print("✅ WP response:", wp_response.text)
+            print("\u2705 WP response:", wp_response.text)
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Pagamento non riuscito"})
@@ -157,3 +162,4 @@ def create_subscription():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+    
