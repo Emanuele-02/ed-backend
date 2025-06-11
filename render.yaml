@@ -2,10 +2,13 @@ services:
   - type: web
     name: ed-backend
     env: python
-    buildCommand: ""
     startCommand: python app.py
     envVars:
       - key: OPENAI_API_KEY
         sync: false
       - key: FLASK_SECRET_KEY
+        sync: false
+      - key: WP_API_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
         sync: false
