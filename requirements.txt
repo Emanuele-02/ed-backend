@@ -1,3 +1,5 @@
 flask
 flask-cors
 openai>=1.0.0
+stripe>=8.0.0
+requests>=2.28.0
