@@ -98,18 +98,20 @@ def chat():
      title_line = next((line for line in reversed(lines) if line.strip().lower().startswith("titolo:")), None)
      title = title_line.split(":", 1)[1].strip() if title_line else "Nuova chat"
 
-     # 🔍 Filtra titoli generici
+     # 🔍 Filtra titoli generici o inutili
      title_lower = title.lower()
      if (
-     title_lower.startswith("ciao") or
-     "posso aiutarti" in title_lower or
-     "nuova chat" in title_lower or    
-     len(title) < 4  # titoli troppo brevi, tipo "ok"
+        title_lower.startswith("ciao") or
+        "posso aiutarti" in title_lower or
+        "nuova chat" in title_lower or
+        len(title) < 4
      ):
-     title = "Nuova chat"
+        title = "Nuova chat"
 
      # Rimuovi la riga del titolo dalla risposta da mostrare all’utente
-     reply_clean = "\n".join(line for line in lines if not line.strip().lower().startswith("titolo:")).strip()
+     reply_clean = "\n".join(
+         line for line in lines if not line.strip().lower().startswith("titolo:")
+     ).strip())
 
      # Salva la risposta nell'history
      session["history"].append({"role": "assistant", "content": reply_clean})
