@@ -74,60 +74,41 @@ def chat():
     if "history" not in session:
         session["history"] = []
 
-    # Aggiungi il messaggio dell'utente alla history
-    session["history"].append({"role": "user", "content": message})
+            # Estrai il titolo dalla risposta
+        lines = full_reply.strip().split("\n")
+        title_line = next((line for line in reversed(lines) if line.strip().lower().startswith("titolo:")), None)
+        title = title_line.split(":", 1)[1].strip() if title_line else "Nuova chat"
 
-    # Prompt modificato per includere la richiesta del titolo
-    modified_prompt = SYSTEM_PROMPT + "\n\nDopo ogni risposta, fornisci anche un titolo breve (massimo 6 parole) che riassuma l’argomento trattato. Scrivi alla fine su una riga separata: Titolo: ..."
+        # 🔍 Filtra titoli generici o inutili
+        title_lower = title.lower()
+        if (
+            title_lower.startswith("ciao") or
+            "posso aiutarti" in title_lower or
+            "nuova chat" in title_lower or
+            len(title) < 4
+        ):
+            title = "Nuova chat"
 
-    messages = [{"role": "system", "content": modified_prompt}]
-    messages.extend(session["history"][-10:])
+        # Rimuovi la riga del titolo dalla risposta da mostrare all’utente
+        reply_clean = "\n".join(
+            line for line in lines if not line.strip().lower().startswith("titolo:")
+        ).strip()
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4-0125-preview",
-            messages=messages
-        )
+        # Salva la risposta nell'history
+        session["history"].append({"role": "assistant", "content": reply_clean})
 
-        full_reply = response.choices[0].message.content
-        import sys
-        print("📋 FULL REPLY:", full_reply, file=sys.stderr)
-        
-     # Estrai il titolo dalla risposta
-     lines = full_reply.strip().split("\n")
-     title_line = next((line for line in reversed(lines) if line.strip().lower().startswith("titolo:")), None)
-     title = title_line.split(":", 1)[1].strip() if title_line else "Nuova chat"
+        return jsonify({
+            "reply": reply_clean,
+            "title": title,
+            "conversationId": conversation_id,
+            "free_count": session.get("free_count", 0)
+        })
 
-     # 🔍 Filtra titoli generici o inutili
-     title_lower = title.lower()
-     if (
-        title_lower.startswith("ciao") or
-        "posso aiutarti" in title_lower or
-        "nuova chat" in title_lower or
-        len(title) < 4
-     ):
-        title = "Nuova chat"
-
-     # Rimuovi la riga del titolo dalla risposta da mostrare all’utente
-     reply_clean = "\n".join(
-         line for line in lines if not line.strip().lower().startswith("titolo:")
-     ).strip())
-
-     # Salva la risposta nell'history
-     session["history"].append({"role": "assistant", "content": reply_clean})
-
-     return jsonify({
-     "reply": reply_clean,
-     "title": title,
-     "conversationId": conversation_id,
-     "free_count": session.get("free_count", 0)
-     })
-
-     except Exception as e:
-     import traceback
-     print("❌ Errore backend:", e)
-     traceback.print_exc()
-     return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        import traceback
+        print("❌ Errore backend:", e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
         
 @app.route("/reset", methods=["POST"])
 def reset():
