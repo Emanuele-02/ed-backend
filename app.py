@@ -56,6 +56,7 @@ Il tuo scopo è insegnare a capire, non solo a rispondere.
 
 @app.route("/chat", methods=["POST"])
 def chat():
+try:
     data = request.get_json()
     conversation_id = data.get("conversationId")
     message = data.get("message", "")
