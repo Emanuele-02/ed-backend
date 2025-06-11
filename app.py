@@ -119,7 +119,7 @@ def chat():
      "title": title,
      "conversationId": conversation_id,
      "free_count": session.get("free_count", 0)
-})
+     })
 
      except Exception as e:
      import traceback
