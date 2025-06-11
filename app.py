@@ -93,29 +93,39 @@ def chat():
         import sys
         print("📋 FULL REPLY:", full_reply, file=sys.stderr)
         
-        # Estrai il titolo dalla risposta
-        lines = full_reply.strip().split("\n")
-        title_line = next((line for line in reversed(lines) if line.strip().lower().startswith("titolo:")), None)
-        title = title_line.split(":", 1)[1].strip() if title_line else "Nuova chat"
+     # Estrai il titolo dalla risposta
+     lines = full_reply.strip().split("\n")
+     title_line = next((line for line in reversed(lines) if line.strip().lower().startswith("titolo:")), None)
+     title = title_line.split(":", 1)[1].strip() if title_line else "Nuova chat"
 
-        # Rimuovi la riga del titolo dalla risposta da mostrare all’utente
-        reply_clean = "\n".join(line for line in lines if not line.strip().lower().startswith("titolo:")).strip()
+     # 🔍 Filtra titoli generici
+     title_lower = title.lower()
+     if (
+     title_lower.startswith("ciao") or
+     "posso aiutarti" in title_lower or
+     "nuova chat" in title_lower or    
+     len(title) < 4  # titoli troppo brevi, tipo "ok"
+     ):
+     title = "Nuova chat"
 
-        # Salva la risposta nell'history
-        session["history"].append({"role": "assistant", "content": reply_clean})
+     # Rimuovi la riga del titolo dalla risposta da mostrare all’utente
+     reply_clean = "\n".join(line for line in lines if not line.strip().lower().startswith("titolo:")).strip()
 
-        return jsonify({
-        "reply": reply_clean,
-        "title": title,
-        "conversationId": conversation_id,  # ✅ aggiunto
-        "free_count": session.get("free_count", 0)
-        })
+     # Salva la risposta nell'history
+     session["history"].append({"role": "assistant", "content": reply_clean})
 
-    except Exception as e:
-        import traceback
-        print("❌ Errore backend:", e)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+     return jsonify({
+     "reply": reply_clean,
+     "title": title,
+     "conversationId": conversation_id,
+     "free_count": session.get("free_count", 0)
+})
+
+     except Exception as e:
+     import traceback
+     print("❌ Errore backend:", e)
+     traceback.print_exc()
+     return jsonify({"error": str(e)}), 500
         
 @app.route("/reset", methods=["POST"])
 def reset():
