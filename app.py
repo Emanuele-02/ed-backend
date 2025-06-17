@@ -60,6 +60,7 @@ def chat():
         conversation_id = data.get("conversationId")
         message = data.get("message", "")
         is_subscribed = data.get("isSubscribed", False)
+        method = data.get("method", "Esplicativo")  # 🆕 metodo didattico scelto
 
         if not message:
             return jsonify({"error": "Messaggio mancante"}), 400
@@ -76,9 +77,20 @@ def chat():
 
         session["history"].append({"role": "user", "content": message})
 
-        modified_prompt = SYSTEM_PROMPT + "\n\nDopo ogni risposta, fornisci anche un titolo breve (massimo 6 parole) che riassuma l’argomento trattato. Scrivi alla fine su una riga separata: Titolo: ..."
+        # 🧠 Prompt base + adattamento in base al metodo
+        method_instructions = {
+            "Esplicativo": "Spiega in modo chiaro e lineare, come un bravo insegnante.",
+            "Interrogativo": "Rispondi stimolando la riflessione con domande continue e provocatorie.",
+            "Socratico": "Accompagna lo studente alla scoperta con domande guidate, senza mai dare risposte dirette.",
+            "Esemplificativo": "Spiega sempre usando esempi pratici e concreti.",
+            "Operativo": "Dai istruzioni pratiche passo-passo o proponi esercizi guidati."
+        }
 
-        messages = [{"role": "system", "content": modified_prompt}]
+        method_prompt = method_instructions.get(method, method_instructions["Esplicativo"])
+
+        combined_prompt = SYSTEM_PROMPT + "\n\n" + method_prompt + "\n\nDopo ogni risposta, fornisci anche un titolo breve (massimo 6 parole) che riassuma l’argomento trattato. Scrivi alla fine su una riga separata: Titolo: ..."
+
+        messages = [{"role": "system", "content": combined_prompt}]
         messages.extend(session["history"][-10:])
 
         response = client.chat.completions.create(
@@ -116,7 +128,7 @@ def chat():
 
     except Exception as e:
         import traceback
-        print("\u274c Errore backend:", e)
+        print("❌ Errore backend:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
