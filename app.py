@@ -14,6 +14,7 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 WP_API_URL = "https://www.ed.lume.study/wp-json/lume/v1/set_subscribed"
 WP_API_SECRET = os.getenv("WP_API_SECRET", "your-fallback-secret")
+print("🔐 ENV WP_API_SECRET:", repr(WP_API_SECRET))
 
 # Inizializzazione OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
