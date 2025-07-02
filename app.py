@@ -7,7 +7,7 @@ import requests
 
 # Inizializzazione Flask
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://www.ed.lume.study"])
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
