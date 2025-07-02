@@ -142,6 +142,7 @@ def reset():
 def create_subscription():
     auth_header = request.headers.get("Authorization")
     if auth_header != f"Bearer {WP_API_SECRET}":
+        print("❌ Autenticazione fallita:", auth_header)
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
@@ -149,6 +150,8 @@ def create_subscription():
     payment_method_id = data.get("payment_method_id")
 
     try:
+        print("🔄 Creazione customer e abbonamento Stripe in corso...")
+        
         customer = stripe.Customer.create(email=email, payment_method=payment_method_id, invoice_settings={
             "default_payment_method": payment_method_id,
         })
@@ -160,6 +163,10 @@ def create_subscription():
         )
 
         payment_intent = subscription["latest_invoice"]["payment_intent"]
+        
+        print("✅ Abbonamento Stripe creato:", subscription.id)
+        print("💳 Payment status:", payment_intent["status"])
+        
         if payment_intent["status"] == "succeeded":
             wp_response = requests.post(WP_API_URL, json={"email": email}, headers={
                 "Authorization": f"Bearer {WP_API_SECRET}"
@@ -170,6 +177,7 @@ def create_subscription():
             return jsonify({"success": False, "error": "Pagamento non riuscito"})
 
     except Exception as e:
+        print("❌ Errore durante la creazione abbonamento:", str(e))
         return jsonify({"success": False, "error": str(e)})
 
 if __name__ == "__main__":
