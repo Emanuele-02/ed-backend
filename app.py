@@ -141,8 +141,16 @@ def reset():
 @app.route("/create-subscription", methods=["POST"])
 def create_subscription():
     auth_header = request.headers.get("Authorization")
-    if auth_header != f"Bearer {WP_API_SECRET}":
-        print("❌ Autenticazione fallita:", auth_header)
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        print("❌ Header mancante o malformato:", auth_header)
+        return jsonify({"error": "Unauthorized"}), 401
+
+    token = auth_header.replace("Bearer ", "").strip()
+
+    if token != WP_API_SECRET:
+        print("❌ Token non valido:", repr(token))
+        print("🔐 Atteso:", repr(WP_API_SECRET))
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
