@@ -147,11 +147,11 @@ def create_subscription():
         print("❌ Header mancante o malformato:", auth_header)
         return jsonify({"error": "Unauthorized"}), 401
 
-    token = auth_header.replace("Bearer ", "").strip()
+    expected_token = f"Bearer {WP_API_SECRET}"
 
-    if token != WP_API_SECRET:
-        print("❌ Token non valido:", repr(token))
-        print("🔐 Atteso:", repr(WP_API_SECRET))
+    if auth_header.strip() != expected_token:
+        print("❌ Token non valido:", repr(auth_header.strip()))
+        print("🔐 Atteso:", repr(expected_token))
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
