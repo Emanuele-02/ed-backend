@@ -152,23 +152,30 @@ def create_subscription():
         )
 
         invoice = subscription.get("latest_invoice", {})
-        payment_intent = invoice.get("payment_intent")
+        payment_intent_data = invoice.get("payment_intent")
 
-        if not payment_intent:
-            logging.error("❌ PaymentIntent mancante dalla invoice.")
+        if not payment_intent_data:
+            logging.error("❌ Nessun payment_intent presente nella invoice.")
             return jsonify({"success": False, "error": "Nessun PaymentIntent trovato."})
 
-        invoice = stripe.Invoice.retrieve(str(invoice_id))
-        logging.debug("🧾 Invoice completa: %s", invoice)
+        if isinstance(payment_intent_data, dict):
+            payment_intent = payment_intent_data
+            status = payment_intent.get("status")
 
-        payment_intent_id = invoice.get("payment_intent")
-        if not payment_intent_id:
-            logging.error("❌ Nessun payment_intent presente nella invoice.")
-            return jsonify({"success": False, "error": "Nessun payment_intent trovato."})
-        
-        logging.info("💳 PaymentIntent status: %s", payment_intent["status"])
-    
-        if payment_intent["status"] == "succeeded":
+        elif isinstance(payment_intent_data, str):
+            try:
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_data)
+                status = payment_intent.get("status")
+            except Exception as e:
+                logging.exception("❌ Errore nel recupero del PaymentIntent.")
+                return jsonify({"success": False, "error": "Errore nel recupero del PaymentIntent."})
+        else:
+            loggin.error("❌ payment_intent malformato: %r", payment_intent_data)
+            return jsonify({"success": False, "error": "PaymentIntent malformato."})
+
+        logging.info("💳 PaymentIntent status: %s", status)
+
+        if status == "succeeded":
             wp_response = requests.post(
                 WP_API_URL,
                 json={"email": email},
@@ -176,6 +183,7 @@ def create_subscription():
             )
             logging.info("✅ WP response: %s", wp_response.text)
             return jsonify({"success": True})
+
         else:
             return jsonify({"success": False, "error": "Pagamento non riuscito"})
         
