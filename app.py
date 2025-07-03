@@ -152,7 +152,7 @@ def create_subscription():
         )
 
         invoice_id = subscription.get("latest_invoice")
-            if not invoice_id:
+        if not invoice_id:
             logging.error("❌ Nessuna invoice trovata nella subscription.")
             return jsonify({"success": False, "error": "Nessuna invoice trovata."})
 
