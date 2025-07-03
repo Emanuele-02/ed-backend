@@ -148,13 +148,15 @@ def create_subscription():
         subscription = stripe.Subscription.create(
             customer=customer.id,
             items=[{"price": "price_1RWfGcHUcdjxDHrPD8Fmy9hS"}],
-            expand=["latest_invoice"]
+            expand=["latest_invoice.payment_intent"]
         )
 
-        invoice_id = subscription.get("latest_invoice")
-        if not invoice_id:
-            logging.error("❌ Nessuna invoice trovata nella subscription.")
-            return jsonify({"success": False, "error": "Nessuna invoice trovata."})
+        invoice = subscription.get("latest_invoice", {})
+        payment_intent = invoice.get("payment_intent")
+
+        if not payment_intent:
+            logging.error("❌ PaymentIntent mancante dalla invoice.")
+            return jsonify({"success": False, "error": "Nessun PaymentIntent trovato."})
 
         invoice = stripe.Invoice.retrieve(str(invoice_id))
         logging.debug("🧾 Invoice completa: %s", invoice)
@@ -164,7 +166,6 @@ def create_subscription():
             logging.error("❌ Nessun payment_intent presente nella invoice.")
             return jsonify({"success": False, "error": "Nessun payment_intent trovato."})
         
-        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
         logging.info("💳 PaymentIntent status: %s", payment_intent["status"])
     
         if payment_intent["status"] == "succeeded":
