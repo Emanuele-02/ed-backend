@@ -124,9 +124,6 @@ def create_subscription():
     received_token = auth_header.replace("Bearer ", "").strip()
     expected_token = WP_API_SECRET.strip()
 
-    logging.debug("🔐 Token atteso: %r", expected_token)
-    logging.debug("🔑 Token ricevuto: %r", received_token)
-
     if received_token != expected_token:
         logging.warning("❌ Token non valido!")
         return jsonify({"error": "Unauthorized"}), 401
@@ -137,7 +134,7 @@ def create_subscription():
     logging.info("📦 JSON ricevuto: %s", data)
 
     try:
-        logging.info("🔄 Creazione customer e abbonamento Stripe in corso...")
+        logging.info("🔄 Creazione customer e abbonamento Stripe...")
 
         customer = stripe.Customer.create(
             email=email,
@@ -151,30 +148,19 @@ def create_subscription():
             expand=["latest_invoice.payment_intent"]
         )
 
-        invoice = subscription.get("latest_invoice", {})
-        payment_intent_data = invoice.get("payment_intent")
+        invoice = subscription.get("latest_invoice")
+        if not invoice:
+            logging.error("❌ Nessuna invoice trovata nella subscription.")
+            return jsonify({"success": False, "error": "Nessuna invoice trovata."})
 
-        if not payment_intent_data:
-            logging.error("❌ Nessun payment_intent presente nella invoice.")
+        payment_intent = invoice.get("payment_intent")
+        if not payment_intent or not isinstance(payment_intent, dict):
+            logging.error("❌ Nessun PaymentIntent valido.")
             return jsonify({"success": False, "error": "Nessun PaymentIntent trovato."})
-
-        if isinstance(payment_intent_data, dict):
-            payment_intent = payment_intent_data
-            status = payment_intent.get("status")
-
-        elif isinstance(payment_intent_data, str):
-            try:
-                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_data)
-                status = payment_intent.get("status")
-            except Exception as e:
-                logging.exception("❌ Errore nel recupero del PaymentIntent.")
-                return jsonify({"success": False, "error": "Errore nel recupero del PaymentIntent."})
-        else:
-            loggin.error("❌ payment_intent malformato: %r", payment_intent_data)
-            return jsonify({"success": False, "error": "PaymentIntent malformato."})
-
+        
+        status = payment_intent.get("status")
         logging.info("💳 PaymentIntent status: %s", status)
-
+        
         if status == "succeeded":
             wp_response = requests.post(
                 WP_API_URL,
