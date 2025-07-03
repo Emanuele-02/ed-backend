@@ -148,12 +148,25 @@ def create_subscription():
         subscription = stripe.Subscription.create(
             customer=customer.id,
             items=[{"price": "price_1RWfGcHUcdjxDHrPD8Fmy9hS"}],
-            expand=["latest_invoice.payment_intent"]
+            expand=["latest_invoice"]
         )
 
-        payment_intent = subscription["latest_invoice"]["payment_intent"]
-        logging.info("💳 Payment status: %s", payment_intent["status"])
+        invoice_id = subscription.get("latest_invoice")
+            if not invoice_id:
+            logging.error("❌ Nessuna invoice trovata nella subscription.")
+            return jsonify({"success": False, "error": "Nessuna invoice trovata."})
 
+        invoice = stripe.Invoice.retrieve(invoice_id)
+        logging.debug("🧾 Invoice completa: %s", invoice)
+
+        payment_intent_id = invoice.get("payment_intent")
+        if not payment_intent_id:
+            logging.error("❌ Nessun payment_intent presente nella invoice.")
+            return jsonify({"success": False, "error": "Nessun payment_intent trovato."})
+        
+        payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        logging.info("💳 PaymentIntent status: %s", payment_intent["status"])
+    
         if payment_intent["status"] == "succeeded":
             wp_response = requests.post(
                 WP_API_URL,
@@ -164,7 +177,7 @@ def create_subscription():
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Pagamento non riuscito"})
-
+        
     except Exception as e:
         logging.exception("❌ Errore durante la creazione abbonamento")
         return jsonify({"success": False, "error": str(e)})
