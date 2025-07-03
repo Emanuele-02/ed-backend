@@ -14,7 +14,11 @@ logging.basicConfig(
 
 # ——— INIZIALIZZAZIONE FLASK ———
 app = Flask(__name__)
-CORS(app, origins=["https://www.ed.lume.study"])
+CORS(app, origins=[
+  "https://www.ed.lume.study",
+  "https://ed.lume.study",
+  "http://localhost:3000"
+], supports_credentials=True)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key")
 
 # ——— STRIPE & API ———
