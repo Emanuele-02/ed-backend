@@ -156,7 +156,7 @@ def create_subscription():
             logging.error("❌ Nessuna invoice trovata nella subscription.")
             return jsonify({"success": False, "error": "Nessuna invoice trovata."})
 
-        invoice = stripe.Invoice.retrieve(invoice_id)
+        invoice = stripe.Invoice.retrieve(str(invoice_id))
         logging.debug("🧾 Invoice completa: %s", invoice)
 
         payment_intent_id = invoice.get("payment_intent")
