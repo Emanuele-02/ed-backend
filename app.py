@@ -41,7 +41,7 @@ Sei Ed, un tutor digitale per studenti della scuola secondaria di primo e second
 """
 
 # ——— ROUTE CHAT ———
-@app.route("/chat", methods=["POST"])
+@app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
     try:
         data = request.get_json()
