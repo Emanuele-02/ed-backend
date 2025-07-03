@@ -140,6 +140,7 @@ def reset():
     return jsonify({"status": "Memoria resettata"})
 
 @app.route("/create-subscription", methods=["POST"])
+print("📥 Richiesta ricevuta su /create-subscription")
 def create_subscription():
     auth_header = request.headers.get("Authorization")
 
@@ -148,13 +149,17 @@ def create_subscription():
         return jsonify({"error": "Unauthorized"}), 401
 
     expected_token = f"Bearer {WP_API_SECRET}"
+    received_token = auth_header.strip()
 
-    if auth_header.strip() != expected_token:
-        print("❌ Token non valido:", repr(auth_header.strip()))
-        print("🔐 Atteso:", repr(expected_token))
+    print("🔑 Token ricevuto:", repr(received_token))
+    print("🔐 Token atteso:", repr(expected_token))
+
+    if received_token != expected_token:
+        print("❌ Token non valido!")
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
+    print("📦 JSON ricevuto:", data)
     email = data.get("email")
     payment_method_id = data.get("payment_method_id")
 
