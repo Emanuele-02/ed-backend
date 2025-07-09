@@ -145,7 +145,7 @@ def create_subscription():
         subscription = stripe.Subscription.create(
             customer=customer.id,
             items=[{"price": "price_1RWfGcHUcdjxDHrPD8Fmy9hS"}],
-            expand=["latest_invoice.payment_intent"]
+            expand=["latest_invoice", "latest_invoice.payment_intent"]
         )
 
         logging.debug("📦 Subscription object: %s", subscription)
