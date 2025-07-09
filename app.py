@@ -188,7 +188,7 @@ def create_subscription():
 def confirm_subscription():
     try:
         data = request.get_json()
-        email: = data.get("email")
+        email = data.get("email")
 
         if not email:
             return jsonify({"success": False, "error": "Email mancante"}), 400
