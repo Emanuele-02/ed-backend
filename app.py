@@ -157,10 +157,12 @@ def create_subscription():
         if not payment_intent or not isinstance(payment_intent, dict):
             logging.error("❌ Nessun PaymentIntent valido.")
             return jsonify({"success": False, "error": "Nessun PaymentIntent trovato."})
-        
+
+        client_secret = payment_intent.get("client_secret")
         status = payment_intent.get("status")
         logging.info("💳 PaymentIntent status: %s", status)
-        
+
+        # Se il pagamento è già riuscito, aggiorna WordPress subito
         if status == "succeeded":
             wp_response = requests.post(
                 WP_API_URL,
@@ -168,8 +170,15 @@ def create_subscription():
                 headers={"Authorization": f"Bearer {WP_API_SECRET}"}
             )
             logging.info("✅ WP response: %s", wp_response.text)
-            return jsonify({"success": True})
-
+            
+        # In ogni caso, ritorna il client_secret per completare il pagamento lato frontend    
+        return jsonify({
+            "success": True,
+            "subscription_id": subscription.id,
+            "client_secret": client_secret,
+            "status": status,
+        }) 
+        
         else:
             return jsonify({"success": False, "error": "Pagamento non riuscito"})
         
