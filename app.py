@@ -178,10 +178,7 @@ def create_subscription():
             "client_secret": client_secret,
             "status": status,
         }) 
-        
-        else:
-            return jsonify({"success": False, "error": "Pagamento non riuscito"})
-        
+                
     except Exception as e:
         logging.exception("❌ Errore durante la creazione abbonamento")
         return jsonify({"success": False, "error": str(e)})
