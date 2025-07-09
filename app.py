@@ -148,12 +148,18 @@ def create_subscription():
             expand=["latest_invoice.payment_intent"]
         )
 
+        logging.debug("📦 Subscription object: %s", subscription)
+        
         invoice = subscription.get("latest_invoice")
+        logging.debug("🧾 Invoice object: %s", invoice)
+        
         if not invoice:
             logging.error("❌ Nessuna invoice trovata nella subscription.")
             return jsonify({"success": False, "error": "Nessuna invoice trovata."})
 
         payment_intent = invoice.get("payment_intent")
+        logging.debug("💳 PaymentIntent object: %s", payment_intent)
+        
         if not payment_intent or not isinstance(payment_intent, dict):
             logging.error("❌ Nessun PaymentIntent valido.")
             return jsonify({"success": False, "error": "Nessun PaymentIntent trovato."})
