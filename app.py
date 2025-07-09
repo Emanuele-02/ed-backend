@@ -183,6 +183,37 @@ def create_subscription():
         logging.exception("❌ Errore durante la creazione abbonamento")
         return jsonify({"success": False, "error": str(e)})
 
+# ——— CREAZIONE ABBONAMENTO STRIPE ———
+@app.route("/create-subscription", methods=["POST"])
+def create_subscription():
+    ...
+except Exception as e:
+   logging.exception("❌ Errore durante la creazione abbonamento") 
+    return jsonify({"success": False, "error": str(e)})
+
+# ——— CONFERMA ABBONAMENTO DOPO PAGAMENTO ———
+@app.route("/confirm-subscription", methods=["POST"])
+def confirm_subscription():
+    try:
+        data = request.get_json()
+        emanil: = data.get("email")
+
+        if not email:
+            return jsonify({"success": False, "error": "Email mancante"}), 400
+
+        wp_response = requests.post(
+            WP_API_URL,
+            json={"email": email},
+            headers={"Authorization": f"Bearer {WP_API_SECRET}"}
+        )
+
+        logging.info("✅ WP aggiornato da /confirm-subscription: %s", wp_response.text)
+        return jsonify({"success": True})
+
+    except Exception as e:
+        logging.exception("❌ Errore in /confirm-subscription")
+        return jsonify({"success": False, "error": str(e)})
+
 # ——— AVVIO APP ———
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
