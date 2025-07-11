@@ -74,10 +74,19 @@ def chat():
         messages = [{"role": "system", "content": combined_prompt}]
         messages.extend(session["history"][-10:])
 
+        # 🔍 LOG DI DEBUG — INSERISCI QUI
+        logging.debug("📨 Messaggio ricevuto: %s", message)
+        logging.debug("📚 Metodo scelto: %s", method)
+        logging.debug("📜 Prompt combinato: %s", combined_prompt)
+        logging.debug("📜 Messaggi inviati a OpenAI: %s", messages)
+
         response = client.chat.completions.create(
             model="gpt-4-0125-preview",
-            messages=messages
+            messages=messages,
+            timeout=20
         )
+
+        logging.debug("🧠 Risposta OpenAI: %s", response)
 
         full_reply = response.choices[0].message.content
         lines = full_reply.strip().split("\n")
