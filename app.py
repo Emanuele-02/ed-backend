@@ -43,6 +43,10 @@ Sei Ed, un tutor digitale per studenti della scuola secondaria di primo e second
 # ——— ROUTE CHAT ———
 @app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
+    if request.method == "OPTIONS":
+        logging.debug("🟡 Preflight OPTIONS ricevuto su /chat")
+        return jsonify({"status": "CORS preflight OK"}), 200
+        
     try:
         data = request.get_json()
         conversation_id = data.get("conversationId")
